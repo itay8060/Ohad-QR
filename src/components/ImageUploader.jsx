@@ -7,8 +7,16 @@ const ImageUploader = ({ onImageUpload }) => {
   const [preview, setPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState(null);
+  const [isSelecting, setIsSelecting] = useState(false);
+
+  const resetUploader = () => {
+    setFile(null);
+    setPreview(null);
+    setUploadStatus(null);
+  };
 
   const onDrop = useCallback((acceptedFiles) => {
+    setIsSelecting(false);
     const selectedFile = acceptedFiles[0];
     if (selectedFile) {
       setFile(selectedFile);
@@ -22,12 +30,14 @@ const ImageUploader = ({ onImageUpload }) => {
     }
   }, []);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     accept: {
       'image/*': ['.jpeg', '.jpg', '.png', '.gif']
     },
-    maxFiles: 1
+    maxFiles: 1,
+    noClick: !!file, // Disable click when file is selected
+    noKeyboard: !!file // Disable keyboard when file is selected
   });
 
   const handleUpload = async () => {
@@ -54,6 +64,9 @@ const ImageUploader = ({ onImageUpload }) => {
         type: 'success', 
         message: 'Image uploaded successfully!' 
       });
+      
+      // Reset the uploader immediately
+      resetUploader();
     } catch (error) {
       console.error('Error uploading image:', error);
       
@@ -84,35 +97,59 @@ const ImageUploader = ({ onImageUpload }) => {
   return (
     <div className="upload-section">
       <div className="upload-container">
-        <div 
-          {...getRootProps({ 
-            className: 'dropzone',
-            onClick: (event) => {
-              if (file) {
-                event.stopPropagation(); // Prevent opening file dialog if we already have a file
-                handleUpload();
-              }
-            }
-          })}
-        >
-          <input {...getInputProps()} />
-          {uploading ? (
-            <div className="upload-status">
-              <p>Uploading...</p>
-              <span className="loading"></span>
+        {!file ? (
+          // Step 1: Show dropzone when no file is selected
+          <div 
+            {...getRootProps({ 
+              className: `dropzone ${isSelecting ? 'selecting' : ''}`
+            })}
+          >
+            <input {...getInputProps({
+              onFocus: () => setIsSelecting(true),
+              onBlur: () => setTimeout(() => setIsSelecting(false), 300)
+            })} />
+            {isSelecting ? (
+              <div className="selecting-status">
+                <p>Opening file picker...</p>
+                <span className="loading"></span>
+              </div>
+            ) : isDragActive ? (
+              <p>Drop the image here...</p>
+            ) : (
+              <p>Drag & drop an image here, or click to select one</p>
+            )}
+          </div>
+        ) : (
+          // Step 2: Show preview and upload button when file is selected
+          <div className="file-selected-container">
+            <div className="preview-container">
+              <img src={preview} alt="Preview" className="preview-image" />
+              <button 
+                className="change-image-btn" 
+                onClick={() => {
+                  if (!uploading) {
+                    resetUploader();
+                  }
+                }}
+                disabled={uploading}
+              >
+                Change
+              </button>
             </div>
-          ) : isDragActive ? (
-            <p>Drop the image here...</p>
-          ) : file ? (
-            <p>Click to upload this image</p>
-          ) : (
-            <p>Drag & drop an image here, or click to select one</p>
-          )}
-        </div>
-        
-        {preview && !uploading && (
-          <div className="preview" onClick={handleUpload}>
-            <img src={preview} alt="Preview" />
+            
+            <button 
+              className={`upload-btn ${file ? 'gentle' : ''}`}
+              onClick={handleUpload}
+              disabled={uploading}
+            >
+              {uploading ? (
+                <>
+                  Uploading... <span className="loading"></span>
+                </>
+              ) : (
+                'Upload Image'
+              )}
+            </button>
           </div>
         )}
         

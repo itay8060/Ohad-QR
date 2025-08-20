@@ -41,17 +41,13 @@ const App = () => {
 
   const handleDeleteImage = () => {
     if (deleteUrl) {
-      window.open(deleteUrl, '_blank');
-      
-      // Clear the image after opening the delete URL
-      setTimeout(() => {
-        localStorage.removeItem('latestImageUrl');
-        localStorage.removeItem('deleteImageUrl');
-        localStorage.removeItem('lastUpdated');
-        setImageUrl('');
-        setDeleteUrl('');
-        setLastUpdated(null);
-      }, 500);
+      // Just clear the image without opening the URL
+      localStorage.removeItem('latestImageUrl');
+      localStorage.removeItem('deleteImageUrl');
+      localStorage.removeItem('lastUpdated');
+      setImageUrl('');
+      setDeleteUrl('');
+      setLastUpdated(null);
     }
   };
 
