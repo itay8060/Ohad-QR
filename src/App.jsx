@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import QRCodeComponent from './components/QRCode';
 import ImageUploader from './components/ImageUploader';
 import Modal from './components/Modal';
-import { getLatestImageUrl, getLastUpdatedTimestamp } from './services/imageService';
+import { getLatestImageUrl, getLastUpdatedTimestamp, getDeleteImageUrl } from './services/imageService';
 
 const App = () => {
   const [imageUrl, setImageUrl] = useState('');
+  const [deleteUrl, setDeleteUrl] = useState('');
   const [showQRModal, setShowQRModal] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   
@@ -15,6 +16,13 @@ const App = () => {
     if (storedImageUrl) {
       setImageUrl(storedImageUrl);
       
+      // Get the delete URL
+      const storedDeleteUrl = getDeleteImageUrl();
+      console.log('Delete URL from localStorage:', storedDeleteUrl);
+      if (storedDeleteUrl) {
+        setDeleteUrl(storedDeleteUrl);
+      }
+      
       // Get the last updated timestamp
       const timestamp = getLastUpdatedTimestamp();
       if (timestamp) {
@@ -23,9 +31,28 @@ const App = () => {
     }
   }, []);
 
-  const handleImageUpload = (url) => {
+  const handleImageUpload = (url, delUrl) => {
+    console.log('Image uploaded with URL:', url);
+    console.log('Delete URL received:', delUrl);
     setImageUrl(url);
+    setDeleteUrl(delUrl);
     setLastUpdated(new Date());
+  };
+
+  const handleDeleteImage = () => {
+    if (deleteUrl) {
+      window.open(deleteUrl, '_blank');
+      
+      // Clear the image after opening the delete URL
+      setTimeout(() => {
+        localStorage.removeItem('latestImageUrl');
+        localStorage.removeItem('deleteImageUrl');
+        localStorage.removeItem('lastUpdated');
+        setImageUrl('');
+        setDeleteUrl('');
+        setLastUpdated(null);
+      }, 500);
+    }
   };
 
   const openQRModal = () => {
@@ -39,7 +66,7 @@ const App = () => {
   return (
     <div className="app-container">
       <div className="header">
-        <h1>QR Image Updater</h1>
+        <h1>QR Image Uploader</h1>
         <p>Upload an image and share it via QR code</p>
       </div>
       
@@ -55,6 +82,13 @@ const App = () => {
               </button>
               <button className="secondary-btn" onClick={() => window.open(imageUrl, '_blank')}>
                 View Image
+              </button>
+              <button 
+                className="danger-btn" 
+                onClick={handleDeleteImage}
+                style={{ display: 'block' }}
+              >
+                Delete Image
               </button>
             </div>
           </div>
@@ -73,7 +107,6 @@ const App = () => {
       <Modal 
         isOpen={showQRModal} 
         onClose={closeQRModal}
-        title="Share Your Image"
       >
         <div className="qr-modal-content">
           <QRCodeComponent url={imageUrl} size={300} />

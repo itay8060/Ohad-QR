@@ -16,7 +16,7 @@ const imgChestApi = axios.create({
 /**
  * Upload an image to ImgChest
  * @param {File} imageFile - The image file to upload
- * @returns {Promise<string>} - The URL of the uploaded image
+ * @returns {Promise<Object>} - The response data from ImgChest API
  */
 export const uploadImage = async (imageFile) => {
   try {
@@ -30,8 +30,11 @@ export const uploadImage = async (imageFile) => {
     console.log('ImgChest response:', response.data);
     
     if (response.data && response.data.data && response.data.data.images && response.data.data.images.length > 0) {
-      // Return the direct link to the image
-      return response.data.data.images[0].link;
+      // Create a simplified response object with just what we need
+      return {
+        imageUrl: response.data.data.images[0].link,
+        deleteUrl: response.data.data.delete_url
+      };
     } else {
       throw new Error('Failed to upload image to ImgChest');
     }
@@ -42,11 +45,13 @@ export const uploadImage = async (imageFile) => {
 };
 
 /**
- * Store the latest image URL in localStorage
+ * Store the latest image URL and delete URL in localStorage
  * @param {string} url - The URL of the image
+ * @param {string} deleteUrl - The URL to delete the image
  */
-export const storeLatestImageUrl = (url) => {
+export const storeLatestImageUrl = (url, deleteUrl) => {
   localStorage.setItem('latestImageUrl', url);
+  localStorage.setItem('deleteImageUrl', deleteUrl || '');
   localStorage.setItem('lastUpdated', new Date().toISOString());
 };
 
@@ -65,4 +70,12 @@ export const getLatestImageUrl = () => {
 export const getLastUpdatedTimestamp = () => {
   const timestamp = localStorage.getItem('lastUpdated');
   return timestamp ? new Date(timestamp) : null;
+};
+
+/**
+ * Get the delete URL for the current image
+ * @returns {string|null} - The URL to delete the image or null if not found
+ */
+export const getDeleteImageUrl = () => {
+  return localStorage.getItem('deleteImageUrl');
 };

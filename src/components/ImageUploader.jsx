@@ -37,14 +37,18 @@ const ImageUploader = ({ onImageUpload }) => {
     setUploadStatus(null);
 
     try {
-      // Upload to Imgur
-      const imageUrl = await uploadImage(file);
+      // Upload to ImgChest
+      const response = await uploadImage(file);
+      const imageUrl = response.imageUrl;
+      const deleteUrl = response.deleteUrl;
       
-      // Store the URL in localStorage
-      storeLatestImageUrl(imageUrl);
+      console.log("Upload successful:", { imageUrl, deleteUrl });
+      
+      // Store the URL and delete URL in localStorage
+      storeLatestImageUrl(imageUrl, deleteUrl);
       
       // Pass URL to parent component
-      onImageUpload(imageUrl);
+      onImageUpload(imageUrl, deleteUrl);
       
       setUploadStatus({ 
         type: 'success', 
@@ -80,7 +84,17 @@ const ImageUploader = ({ onImageUpload }) => {
   return (
     <div className="upload-section">
       <div className="upload-container">
-        <div {...getRootProps({ className: 'dropzone' })} onClick={!file ? undefined : handleUpload}>
+        <div 
+          {...getRootProps({ 
+            className: 'dropzone',
+            onClick: (event) => {
+              if (file) {
+                event.stopPropagation(); // Prevent opening file dialog if we already have a file
+                handleUpload();
+              }
+            }
+          })}
+        >
           <input {...getInputProps()} />
           {uploading ? (
             <div className="upload-status">
@@ -97,7 +111,7 @@ const ImageUploader = ({ onImageUpload }) => {
         </div>
         
         {preview && !uploading && (
-          <div className="preview">
+          <div className="preview" onClick={handleUpload}>
             <img src={preview} alt="Preview" />
           </div>
         )}
