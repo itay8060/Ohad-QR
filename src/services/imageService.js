@@ -79,3 +79,37 @@ export const getLastUpdatedTimestamp = () => {
 export const getDeleteImageUrl = () => {
   return localStorage.getItem('deleteImageUrl');
 };
+
+/**
+ * Delete an image using the delete URL in the background
+ * @param {string} deleteUrl - The URL to delete the image
+ * @returns {Promise<boolean>} - True if successful, false otherwise
+ */
+export const deleteImage = async (deleteUrl) => {
+  try {
+    if (!deleteUrl) return false;
+    
+    // Extract the post ID from the delete URL
+    const postId = deleteUrl.split('/').filter(Boolean).pop();
+    
+    if (!postId) return false;
+    
+    // Make a silent background request to the delete URL
+    const img = new Image();
+    img.style.display = 'none';
+    img.src = `${deleteUrl}?silent=true&t=${new Date().getTime()}`;
+    document.body.appendChild(img);
+    
+    // Remove the image element after a short delay
+    setTimeout(() => {
+      if (document.body.contains(img)) {
+        document.body.removeChild(img);
+      }
+    }, 1000);
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting image:', error);
+    return false;
+  }
+};

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import QRCodeComponent from './components/QRCode';
 import ImageUploader from './components/ImageUploader';
 import Modal from './components/Modal';
-import { getLatestImageUrl, getLastUpdatedTimestamp, getDeleteImageUrl } from './services/imageService';
+import { getLatestImageUrl, getLastUpdatedTimestamp, getDeleteImageUrl, deleteImage } from './services/imageService';
 
 const App = () => {
   const [imageUrl, setImageUrl] = useState('');
@@ -39,9 +39,12 @@ const App = () => {
     setLastUpdated(new Date());
   };
 
-  const handleDeleteImage = () => {
+  const handleDeleteImage = async () => {
     if (deleteUrl) {
-      // Just clear the image without opening the URL
+      // Try to delete the image in the background
+      await deleteImage(deleteUrl);
+      
+      // Clear local storage and state
       localStorage.removeItem('latestImageUrl');
       localStorage.removeItem('deleteImageUrl');
       localStorage.removeItem('lastUpdated');
